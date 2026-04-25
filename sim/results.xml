@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1776807276" />
+    <testcase name="test_pc" classname="test_basic" file="/home/akshatk/Acads/Elec_Stuff/ProcessorDesign/Superscalar/sim/test_basic.py" lineno="6" time="0.0006451606750488281" sim_time_ns="20.0" ratio_time="31000.029563932003" />
+  </testsuite>
+</testsuites>
