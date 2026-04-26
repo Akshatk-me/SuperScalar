@@ -5,6 +5,7 @@ async def reset(dut):
     dut.reset.value = 1
     await RisingEdge(dut.clk)
     dut.reset.value = 0
+    await RisingEdge(dut.clk)
 
 
 async def step(dut, n=1):

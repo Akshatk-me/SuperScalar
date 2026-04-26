@@ -1,6 +1,6 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1776807276" />
-    <testcase name="test_pc" classname="test_basic" file="/home/akshatk/Acads/Elec_Stuff/ProcessorDesign/Superscalar/sim/test_basic.py" lineno="6" time="0.0006451606750488281" sim_time_ns="20.0" ratio_time="31000.029563932003" />
+    <property name="random_seed" value="1777242265" />
+    <testcase name="test_pc_increment" classname="test_basic" file="/home/akshatk/Acads/Elec_Stuff/ProcessorDesign/Superscalar/sim/test_basic.py" lineno="7" time="0.00045800209045410156" sim_time_ns="40.0" ratio_time="87335.84591358667" />
   </testsuite>
 </testsuites>
