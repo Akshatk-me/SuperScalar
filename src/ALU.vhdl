@@ -169,20 +169,19 @@ begin
         -- Extract compare type from lower bits of alu_control
         -- In a real implementation, you'd have a separate compare_type input
         -- For now, we'll use the complement bit to distinguish
-        if (alu_control(4) = '0') then
-          -- BEQ: Branch if Equal
-          if (data1 = data2) then
-            eq <= '1';
-          end if;
-        else
-          -- BLT/BLE would need separate encoding
-          -- This part needs to be connected to your instruction decoder properly
-          if (unsigned(data1) < unsigned(data2)) then
-            lt <= '1';
-          end if;
-          if (unsigned(data1) <= unsigned(data2)) then
-            le <= '1';
-          end if;
+        -- BEQ: Branch if Equal
+        if (data1 = data2) then
+          eq <= '1';
+        end if;
+
+        -- BLT/BLE would need separate encoding
+        -- This part needs to be connected to your instruction decoder properly
+        if (unsigned(data1) < unsigned(data2)) then
+          lt <= '1';
+        end if;
+
+        if (unsigned(data1) <= unsigned(data2)) then
+          le <= '1';
         end if;
 
       -- ============================================
