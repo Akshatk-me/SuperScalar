@@ -85,6 +85,46 @@ Here's a summary of all the tests you've completed so far:
 - 5-bit physical register addresses support up to 32 physical registers
 - Recovery uses flattened 50-bit input (10 entries × 5 bits)
 
+## Free List (`test_freelist.py`)
+
+| Test                                       | Description                                                                | Status  |
+| ------------------------------------------ | -------------------------------------------------------------------------- | ------- |
+| `test_free_list_reset`                     | Reset initializes free list with P10-P31 (22 registers)                    | ✅ PASS |
+| `test_free_list_single_allocate`           | Single register allocation returns sequential registers (P10, P11, P12...) | ✅ PASS |
+| `test_free_list_double_allocate`           | Two registers allocated in one cycle returns correct pair                  | ✅ PASS |
+| `test_free_list_single_free`               | Free single register - FIFO behavior verified                              | ✅ PASS |
+| `test_free_list_double_free`               | Free two registers in one cycle - FIFO order preserved                     | ✅ PASS |
+| `test_free_list_allocate_free_interleaved` | Mixed allocate/free operations maintain correct order                      | ✅ PASS |
+| `test_free_list_empty`                     | Empty flag correctly indicates when no registers available                 | ✅ PASS |
+| `test_free_list_wraparound`                | Circular buffer wraps correctly after 32 entries                           | ✅ PASS |
+| `test_free_list_recovery`                  | Branch recovery restores head pointer from snapshot                        | ✅ PASS |
+| `test_free_list_allocate_free_same_cycle`  | Simultaneous allocate/free in same cycle handled correctly                 | ✅ PASS |
+| `test_free_list_random_stress`             | 100 random operations validated against Python model                       | ✅ PASS |
+| `test_free_list_boundary_conditions`       | Edge cases: full, empty, single register left                              | ✅ PASS |
+| `test_free_list_fifo_order`                | Dedicated test verifying freed registers go to back of queue               | ✅ PASS |
+
+### Key Features Verified:
+
+- **32-entry circular FIFO**: P10-P31 initially available (P0-P9 reserved for initial mappings)
+- **2-way allocation**: Two registers can be allocated per cycle
+- **2-way free**: Two registers can be freed back per cycle
+- **FIFO behavior**: Freed registers go to back of queue, preserving allocation order
+- **Empty flag**: Asserted when head_ptr == tail_ptr
+- **Recovery**: Head pointer restored from snapshot on branch misprediction
+
+### Physical Register Map:
+
+| P0-P7 | P8     | P9     | P10-P31             |
+| ----- | ------ | ------ | ------------------- |
+| R0-R7 | C flag | Z flag | Free for allocation |
+
+### Notes:
+
+- Reset automatically initializes queue with P10 at head, P31 at tail
+- Pointer values are 5-bit (supports 32 entries)
+- Allocate and free operations can happen in same cycle (order: allocate first, then free)
+- Recovery only restores head_ptr; tail_ptr continues from where it was
+
 ## Summary Table
 
 | Module      | Tests Written | Tests Passing | Health       |
@@ -93,6 +133,7 @@ Here's a summary of all the tests you've completed so far:
 | ALU_Control | 11            | 11            | 🟢 Excellent |
 | Unified PRF | 7             | 7             | 🟢 Excellent |
 | FrontEndRAT | 10            | 10            | 🟢 Excellent |
+| Freelist    | 13            | 13            | 🟢 Excellent |
 
 ## What's Left to Test
 
