@@ -230,16 +230,63 @@ The CDB wakeup test was adjusted to respect pipeline timing - wakeup happens com
 - Core functionality verified through 11 dedicated functional tests
 - ROB is production-ready for top-level integration
 
+## Instruction Decoder (`test_instruction_decoder.py`)
+
+| Test                                   | Description                                                          | Status  |
+| -------------------------------------- | -------------------------------------------------------------------- | ------- |
+| `test_decoder_field_extraction_r_type` | R-Type field extraction (opcode, ra, rb, rc, complet, cz)            | ✅ PASS |
+| `test_decoder_field_extraction_i_type` | I-Type field extraction (opcode, ra, rb, imm6 sign-extended)         | ✅ PASS |
+| `test_decoder_field_extraction_j_type` | J-Type field extraction (opcode, ra, imm9 sign-extended)             | ✅ PASS |
+| `test_decoder_add_family`              | All ADD family instructions (ADA, ADC, ADZ, AWC, ACA, ACC, ACZ, ACW) | ✅ PASS |
+| `test_decoder_nand_family`             | All NAND family instructions (NDU, NDC, NDZ, NCU, NCC, NCZ)          | ✅ PASS |
+| `test_decoder_destinations`            | Destination register for R-Type (rc), I-Type (rb), J-Type (ra)       | ✅ PASS |
+| `test_decoder_branch_detection`        | Branch instructions (BEQ, BLT, BLE, JAL, JLR, JRI) identified        | ✅ PASS |
+| `test_decoder_implicit_branch`         | Writing to R0 detected as implicit branch                            | ✅ PASS |
+| `test_decoder_complex_memory`          | LM/SM detected as complex memory operations                          | ✅ PASS |
+| `test_decoder_random`                  | 100 random instructions validated against golden model               | ✅ PASS |
+
+**Key Features Verified:**
+
+- Field extraction for all three instruction formats
+- Sign extension for 6-bit and 9-bit immediates
+- Destination register resolution per instruction type
+- Flag write detection (C and Z flags)
+- Flag read detection for conditional instructions (ADC, ADZ, NDC, NDZ)
+- Branch instruction identification
+- Complex memory operation detection (LM/SM)
+
+---
+
+## Micro-op Sequencer (`test_micro_op_sequencer.py`)
+
+| Test                           | Description                                                           | Status  |
+| ------------------------------ | --------------------------------------------------------------------- | ------- |
+| `test_lm_sparse_bitmap`        | LM with sparse bitmap (R0, R2, R5) - 3 micro-ops generated            | ✅ PASS |
+| `test_sm_full_bitmap`          | SM with all 8 registers (R0-R7) - sequential micro-ops in order       | ✅ PASS |
+| `test_early_exit_optimization` | Early exit when only low bits set (R0 only) - completes in few cycles | ✅ PASS |
+| `test_randomized_bitmaps`      | 100 random LM/SM instructions validated against golden model          | ✅ PASS |
+
+**Key Features Verified:**
+
+- Direct indexing (no shifting delay)
+- Register order: R0 to R7 (ascending)
+- Address increment by 2 bytes per micro-op
+- `stall_fetch` asserted during processing
+- Early exit when all bits processed
+- LMF/SMF flag handling (where applicable)
+
 ## Summary Table
 
-| Module      | Tests Written | Tests Passing | Health    |
-| ----------- | ------------- | ------------- | --------- |
-| ALU         | 11            | 10            | Excellent |
-| ALU_Control | 11            | 11            | Excellent |
-| Unified PRF | 7             | 7             | Excellent |
-| FrontEndRAT | 10            | 10            | Excellent |
-| Freelist    | 13            | 13            | Excellent |
-| ROB         | 13            | 11            | Good      |
+| Module              | Tests Written | Tests Passing | Health    |
+| ------------------- | ------------- | ------------- | --------- |
+| ALU                 | 11            | 10            | Excellent |
+| ALU_Control         | 11            | 11            | Excellent |
+| Unified PRF         | 7             | 7             | Excellent |
+| FrontEndRAT         | 10            | 10            | Excellent |
+| Freelist            | 13            | 13            | Excellent |
+| ROB                 | 13            | 11            | Good      |
+| Instruction Decoder | 10            | 10            | Good      |
+| Micro-op Sequencer  | 4             | 4             | Good      |
 
 ## What's Left to Test
 
