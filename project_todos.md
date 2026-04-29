@@ -1,12 +1,15 @@
 # Auto-generated TODO List
 
-*Last scan: 2026-04-29 08:42:33*
+*Last scan: 2026-04-29 11:21:21*
 
-**Total TODOs:** 3
+**Total TODOs:** 4
 
 ---
 
 ## 🟡 MEDIUM
+
+- [ ] `Python` **akshat**: Do proper random testing, this test failed not sure why
+  - 📁 `tests/test_rob.py:441`
 
 - [ ] `Python` **akshat**: Create documentation on what all is tested exactly
   - 📁 `tests/test_alu.py:1`
@@ -24,4 +27,4 @@
 
 | Priority | Count |
 |----------|-------|
-| MEDIUM | 3 |
+| MEDIUM | 4 |

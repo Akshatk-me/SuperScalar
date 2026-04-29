@@ -37,12 +37,13 @@
 
 ### Free Lists
 
-Feature Description
-Allocation Pops physical registers for new instructions (RAT uses these)
-Freeing Pushes back physical registers when instructions commit
-Initial state P0-P9 reserved for initial mappings (R0-R7, C, Z), P10-P31 available
-2-way Can allocate/free 2 registers per cycle
-Recovery Restores head pointer on branch misprediction
+|    Feature    |                             Description                              |
+| :-----------: | :------------------------------------------------------------------: |
+|  Allocation   |    Pops physical registers for new instructions (RAT uses these)     |
+|    Freeing    |       Pushes back physical registers when instructions commit        |
+| Initial state | P0-P9 reserved for initial mappings (R0-R7, C, Z), P10-P31 available |
+|     2-way     |               Can allocate/free 2 registers per cycle                |
+|   Recovery    |            Restores head pointer on branch misprediction             |
 
 Reset logic has initial offset, RAT maps R0 to Z (10 registers) to Physical Registers 0 to 9 on startup. Thus, free list pushes P10 to P31 into the queue and sets the write pointer (tail) to index 22.
 
