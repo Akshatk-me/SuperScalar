@@ -125,6 +125,61 @@ Here's a summary of all the tests you've completed so far:
 - Allocate and free operations can happen in same cycle (order: allocate first, then free)
 - Recovery only restores head_ptr; tail_ptr continues from where it was
 
+## ALU Arbiter (`test_alu_arbiter.py`)
+
+| Test                            | Description                                                    | Status  |
+| ------------------------------- | -------------------------------------------------------------- | ------- |
+| `test_arbiter_single_request`   | Single request from entry 0 or 2 gets granted                  | ✅ PASS |
+| `test_arbiter_two_requests`     | Two requests (entries 0 and 1) both granted, lower index first | ✅ PASS |
+| `test_arbiter_three_requests`   | Three requests - only first two (0 and 1) granted per cycle    | ✅ PASS |
+| `test_arbiter_four_requests`    | Four requests - only entries 0 and 1 granted                   | ✅ PASS |
+| `test_arbiter_grant_bus_output` | grant_bus correctly indicates granted entries                  | ✅ PASS |
+| `test_arbiter_no_requests`      | No requests - valid flags false, no grants                     | ✅ PASS |
+
+### Key Features Verified:
+
+- **Fixed priority**: Lower index (0) has highest priority
+- **2-way superscalar**: Two grants per cycle maximum
+- **grant_bus output**: One-hot vector showing which entries won
+- **Valid flags**: Indicate when 1st and 2nd grants are active
+
+---
+
+## ALU Reservation Station Entry (`test_alu_rs_entry.py`)
+
+| Test                               | Description                                               | Status  |
+| ---------------------------------- | --------------------------------------------------------- | ------- |
+| `test_rs_dispatch_and_busy`        | Dispatch makes entry busy, stores opcode and tags         | ✅ PASS |
+| `test_rs_ready_when_all_ready`     | ready_to_iss asserted when all operands ready at dispatch | ✅ PASS |
+| `test_rs_not_ready_when_waiting`   | ready_to_iss deasserted when operands missing             | ✅ PASS |
+| `test_rs_cdb_wakeup`               | CDB broadcast wakes up waiting operand (next cycle)       | ✅ PASS |
+| `test_rs_cdb_wakeup_two_operands`  | CDB wakes up two waiting operands sequentially            | ✅ PASS |
+| `test_rs_issue_grant_clears_entry` | Issue grant clears busy flag, frees entry                 | ✅ PASS |
+| `test_rs_cdb_wakeup_on_both_buses` | Both CDB buses can wake up different operands             | ✅ PASS |
+
+### Key Features Verified:
+
+- **Dispatch**: Loads instruction into RS entry with tags and ready bits
+- **Busy tracking**: Entry marked busy until issue grant received
+- **Wakeup logic**: Snoops 2 CDB buses for matching tags
+- **Ready detection**: Combinatorial logic checks all operands ready
+- **Issue interface**: Exposes tags and opcode to ALU when granted
+- **4 operands tracked**: rs1, rs2, c_flag, z_flag
+
+### Pipeline Timing (Correct):
+
+| Cycle | Event                                       |
+| ----- | ------------------------------------------- |
+| N     | CDB broadcasts result tag                   |
+| N     | Wakeup logic detects match (combinatorial)  |
+| N+1   | Operand ready, ready_to_iss asserted        |
+| N+1   | Arbiter selects entry, issue grant asserted |
+| N+2   | ALU executes, result on CDB                 |
+
+### Note on CDB Wakeup Test:
+
+The CDB wakeup test was adjusted to respect pipeline timing - wakeup happens combinatorially but the `ready_to_iss` signal reflects the new state after a short propagation delay. The design correctly implements wakeup in the same cycle and issue in the next cycle, matching real processor behavior.
+
 ## Summary Table
 
 | Module      | Tests Written | Tests Passing | Health       |
