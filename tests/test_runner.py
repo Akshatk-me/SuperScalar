@@ -25,6 +25,8 @@ SIMULATOR = os.getenv("SIM", "ghdl")
         ("test_alu_arbiter", "alu_arbiter", "ALUArbiter.vhdl"),
         ("test_alu_rs_entry", "alu_rs_entry", "ALU_RS_Entry.vhdl"),
         ("test_rob", "reorder_buffer", "ROB.vhdl"),
+        ("test_rrat", "retirement_rat", "RRAT.vhdl"),
+        ("test_store_queue", "store_queue", "StoreQueue.vhdl"),
     ],
 )
 def test_hardware_modules(module_name, top_level, vhdl_file):

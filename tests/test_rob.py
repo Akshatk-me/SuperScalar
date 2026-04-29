@@ -439,62 +439,125 @@ async def test_rob_wraparound(dut):
 
 
 # TODO(akshat): Do proper random testing, this test failed not sure why @medium file:test_rob.py
-# @cocotb.test()
-# async def test_rob_random_stress(dut):
-#     """Random stress test"""
-#     dut._log.info("Starting random stress test")
-#     await setup_rob(dut)
-#
-#     # Keep track of ROB state in Python
-#     rob_state = []  # List of (arch, phys, we, completed)
-#     next_phys = 20
-#
-#     for cycle in range(100):
-#         # Randomly dispatch 0, 1, or 2 instructions
-#         num_dispatch = random.choice([0, 1, 2])
-#
-#         for i in range(num_dispatch):
-#             we = random.choice([True, False])
-#             arch = random.randint(0, 9)
-#             phys = next_phys
-#             next_phys += 1
-#
-#             await dispatch(
-#                 dut, inst1_en=True, inst1_we=we, inst1_arch=arch, inst1_phys=phys
-#             )
-#             rob_state.append([arch, phys, we, False])
-#
-#         # Randomly complete some instructions (CDB)
-#         if rob_state and random.choice([True, False]):
-#             idx = random.randint(0, len(rob_state) - 1)
-#             if not rob_state[idx][3]:
-#                 await complete_instruction(dut, phys_tag=rob_state[idx][1])
-#                 rob_state[idx][3] = True
-#
-#         # Commit as many as possible (in-order)
-#         committed = 0
-#         while rob_state and rob_state[0][3]:
-#             # Should be ready to commit
-#             if committed == 0:
-#                 assert dut.commit_valid_1.value == 1, f"Cycle {cycle}: Should commit"
-#             elif committed == 1:
-#                 assert (
-#                     dut.commit_valid_2.value == 1
-#                 ), f"Cycle {cycle}: Should commit second"
-#
-#             # Pop from state
-#             rob_state.pop(0)
-#             committed += 1
-#
-#             # Commit takes a cycle
-#             await RisingEdge(dut.clk)
-#             await Timer(2, unit="ns")
-#
-#         if cycle % 20 == 0:
-#             dut._log.debug(f"Cycle {cycle}: ROB size={len(rob_state)}")
-#
-#     dut._log.info("Random stress test passed")
-#
+@cocotb.test()
+async def test_rob_random_stress(dut):
+    """Upgraded Random stress test with cycle-accurate Python model"""
+    dut._log.info("Starting random stress test")
+    await setup_rob(dut)
+
+    # Our Golden Model: A list of dictionaries representing the ROB queue
+    rob_state = []
+    next_phys = 0
+
+    for cycle in range(200):
+        # ==========================================
+        # 1. APPLY STIMULUS (Combinatorial)
+        # ==========================================
+        cdb1_tag, cdb2_tag = None, None
+
+        # Randomly complete up to 2 instructions that are waiting
+        unready = [
+            i for i, inst in enumerate(rob_state) if not inst["ready"] and inst["we"]
+        ]
+        if unready and random.choice([True, False]):
+            idx = random.choice(unready)
+            cdb1_tag = rob_state[idx]["phys"]
+            unready.remove(idx)
+
+            if unready and random.choice([True, False]):
+                idx2 = random.choice(unready)
+                cdb2_tag = rob_state[idx2]["phys"]
+
+        dut.cdb1_valid.value = 1 if cdb1_tag is not None else 0
+        dut.cdb1_tag.value = cdb1_tag if cdb1_tag is not None else 0
+        dut.cdb2_valid.value = 1 if cdb2_tag is not None else 0
+        dut.cdb2_tag.value = cdb2_tag if cdb2_tag is not None else 0
+
+        # Randomly dispatch (0, 1, or 2), constrained by capacity
+        capacity = 16 - len(rob_state)
+        num_dispatch = min(random.choice([0, 1, 2]), capacity)
+
+        new_insts = []
+        if num_dispatch > 0:
+            we = random.choice([1, 0])
+            arch = random.randint(0, 9)
+            phys = next_phys
+            next_phys = (next_phys + 1) % 32  # <--- THE FIX for the 32 error!
+            new_insts.append({"arch": arch, "phys": phys, "we": we, "ready": not we})
+
+            dut.disp_en_1.value = 1
+            dut.disp_we_1.value = we
+            dut.disp_arch_1.value = arch
+            dut.disp_phys_1.value = phys
+        else:
+            dut.disp_en_1.value = 0
+
+        if num_dispatch > 1:
+            we = random.choice([1, 0])
+            arch = random.randint(0, 9)
+            phys = next_phys
+            next_phys = (next_phys + 1) % 32
+            new_insts.append({"arch": arch, "phys": phys, "we": we, "ready": not we})
+
+            dut.disp_en_2.value = 1
+            dut.disp_we_2.value = we
+            dut.disp_arch_2.value = arch
+            dut.disp_phys_2.value = phys
+        else:
+            dut.disp_en_2.value = 0
+
+        # Wait a tiny bit for VHDL combinatorial logic to settle
+        await Timer(1, unit="ns")
+
+        # ==========================================
+        # 2. VERIFY COMMIT COMBINATORIAL LOGIC
+        # ==========================================
+        # Determine what *should* commit based on our Python model
+        exp_commit_1 = len(rob_state) > 0 and rob_state[0]["ready"]
+        exp_commit_2 = (
+            len(rob_state) > 1 and rob_state[0]["ready"] and rob_state[1]["ready"]
+        )
+
+        assert dut.commit_valid_1.value == (
+            1 if exp_commit_1 else 0
+        ), f"Cycle {cycle}: commit_valid_1 mismatch."
+        assert dut.commit_valid_2.value == (
+            1 if exp_commit_2 else 0
+        ), f"Cycle {cycle}: commit_valid_2 mismatch."
+
+        # ==========================================
+        # 3. ADVANCE TIME (The Clock Edge!)
+        # ==========================================
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+
+        # ==========================================
+        # 4. UPDATE PYTHON MODEL
+        # ==========================================
+        # A. Remove committed instructions
+        if exp_commit_1 and exp_commit_2:
+            rob_state.pop(0)
+            rob_state.pop(0)
+        elif exp_commit_1:
+            rob_state.pop(0)
+
+        # B. Apply CDB completions to our list
+        if cdb1_tag is not None:
+            for inst in rob_state:
+                if inst["phys"] == cdb1_tag and inst["we"]:
+                    inst["ready"] = True
+        if cdb2_tag is not None:
+            for inst in rob_state:
+                if inst["phys"] == cdb2_tag and inst["we"]:
+                    inst["ready"] = True
+
+        # C. Add new dispatches
+        rob_state.extend(new_insts)
+
+        if cycle % 20 == 0:
+            dut._log.debug(f"Cycle {cycle}: ROB size={len(rob_state)}")
+
+    dut._log.info("Random stress test passed! You are a hardware wizard.")
 
 
 @cocotb.test()
