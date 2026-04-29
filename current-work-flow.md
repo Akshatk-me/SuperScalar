@@ -26,6 +26,16 @@ If you add a signal, modify the interface not the modules that touch the bus.
 
 Drivers: Never manually write `dut.clk.value = 1` or `dut.data.value = 0x5` directly in the main test loop.
 
+### Why cocotb instead of VHDL TBs?
+
+VHDL requires me to be verbose which is an issue if module definition changes, I have to update the TB properly and all this has to be mentally tracked.
+
+Also I have to take care of hardware that will be inferred when TBs are synthesized, this introduces bugs that can be generated from TB.
+
+Also no abstraction and logic control in VHDL, explicitly write real time hardware signal manipulation.
+
+In cocotb it's all abstracted and clean interfaces, we don't have to worry about hardware inference of the TB since python guarentees driving of signals will happen at the required simulation step. Also abstraction and higher logic capability means I can test extensively without writing manual hardcoded tests.
+
 ## Project Structure
 
 ```

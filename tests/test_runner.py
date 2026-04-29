@@ -19,6 +19,7 @@ SIMULATOR = os.getenv("SIM", "ghdl")
     [
         ("test_alu", "alu", "ALU.vhdl"),
         ("test_alu_control", "alu_control", "ALU_Control.vhdl"),
+        ("test_unified_prf", "unified_prf", "UnifiedPRF.vhdl"),
     ],
 )
 def test_hardware_modules(module_name, top_level, vhdl_file):
