@@ -55,18 +55,48 @@ Here's a summary of all the tests you've completed so far:
 - 18-bit width (16-bit data + C flag + Z flag)
 - 32 physical registers
 
+## Front End RAT (`test_frontend_rat.py`)
+
+| Test                                   | Description                                                                          | Status  |
+| -------------------------------------- | ------------------------------------------------------------------------------------ | ------- |
+| `test_rat_reset`                       | Reset maps R0→P0, R1→P1, R2→P2, R3→P3, R4→P4, R5→P5, R6→P6, R7→P7, C→P8, Z→P9        | ✅ PASS |
+| `test_rat_single_rename`               | Single instruction rename: write to architectural register, get new physical mapping | ✅ PASS |
+| `test_rat_two_instructions_parallel`   | Two instructions renaming different registers in same cycle                          | ✅ PASS |
+| `test_rat_forwarding`                  | Instruction 2 reads Instruction 1's destination in same cycle (bypass forwarding)    | ✅ PASS |
+| `test_rat_flag_renaming`               | C and Z flags rename together to same physical register (bundled with data)          | ✅ PASS |
+| `test_rat_write_priority`              | Both instructions write same register → Instruction 2 (younger) wins                 | ✅ PASS |
+| `test_rat_flag_priority`               | Both instructions update flags → Instruction 2 wins                                  | ✅ PASS |
+| `test_rat_recovery`                    | Branch misprediction recovery: load saved state from RRAT (50-bit vector)            | ✅ PASS |
+| `test_rat_complex_forwarding_scenario` | Instruction 2 reads multiple forwarded values (R1, R2, C flag) from Instruction 1    | ✅ PASS |
+| `test_rat_random_stress`               | 50 random cycles with mixed operations, verified against Python model                | ✅ PASS |
+
+### Key Features Verified:
+
+- **10 RAT entries**: 8 architectural registers (R0-R7) + C flag + Z flag
+- **2-way superscalar rename**: Two instructions renamed per cycle
+- **Forwarding logic**: Instruction 2 sees Instruction 1's writes in same cycle
+- **Write priority**: Instruction 2 (younger) overrides Instruction 1 on conflicts
+- **Recovery**: Full RAT state restored from RRAT in one cycle
+- **Reset**: Identity mapping (R0→P0, R1→P1, ..., C→P8, Z→P9)
+
+### Notes:
+
+- Flags C and Z share the same physical register allocation (bundled with data in UnifiedPRF)
+- 5-bit physical register addresses support up to 32 physical registers
+- Recovery uses flattened 50-bit input (10 entries × 5 bits)
+
 ## Summary Table
 
 | Module      | Tests Written | Tests Passing | Health       |
 | ----------- | ------------- | ------------- | ------------ |
-| ALU         | 11            | 10            | 🟢 Good      |
+| ALU         | 11            | 10            | 🟢 Excellent |
 | ALU_Control | 11            | 11            | 🟢 Excellent |
 | Unified PRF | 7             | 7             | 🟢 Excellent |
+| FrontEndRAT | 10            | 10            | 🟢 Excellent |
 
 ## What's Left to Test
 
 From your `src/` folder:
 
 - `PC.vhdl` - Program Counter with branch/jump logic
-- `CZFlags.vhdl` - Carry/Zero flag register
 - `top.vhdl` - Full processor integration (the big one)
