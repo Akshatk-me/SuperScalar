@@ -38,6 +38,13 @@ entity alu_rs_entry is
     cdb2_valid : in    std_logic;
     cdb2_tag   : in    std_logic_vector(4 downto 0);
 
+    -- Immediate related singnals
+    in_imm     : in    std_logic_vector(15 downto 0); -- Extended to 16-bit for ALU
+    in_use_imm : in    std_logic;                     -- 1 if we use the immediate instead of RS2
+
+    out_imm     : out   std_logic_vector(15 downto 0);
+    out_use_imm : out   std_logic;
+
     -- ==========================================
     -- ISSUE INTERFACE (Select Logic to ALU)
     -- ==========================================
@@ -62,16 +69,18 @@ architecture behavioral of alu_rs_entry is
   -- Internal state registers for this RS slot
   signal is_busy : std_logic;
 
-  signal rs1_tag  : std_logic_vector(4 downto 0);
-  signal rs2_tag  : std_logic_vector(4 downto 0);
-  signal c_tag    : std_logic_vector(4 downto 0);
-  signal z_tag    : std_logic_vector(4 downto 0);
-  signal dest_tag : std_logic_vector(4 downto 0);
-  signal rs1_rdy  : std_logic;
-  signal rs2_rdy  : std_logic;
-  signal c_rdy    : std_logic;
-  signal z_rdy    : std_logic;
-  signal opcode   : std_logic_vector(3 downto 0);
+  signal rs1_tag     : std_logic_vector(4 downto 0);
+  signal rs2_tag     : std_logic_vector(4 downto 0);
+  signal c_tag       : std_logic_vector(4 downto 0);
+  signal z_tag       : std_logic_vector(4 downto 0);
+  signal dest_tag    : std_logic_vector(4 downto 0);
+  signal rs1_rdy     : std_logic;
+  signal rs2_rdy     : std_logic;
+  signal c_rdy       : std_logic;
+  signal z_rdy       : std_logic;
+  signal opcode      : std_logic_vector(3 downto 0);
+  signal imm_reg     : std_logic_vector(15 downto 0);
+  signal use_imm_reg : std_logic;
 
 begin
 
@@ -84,6 +93,10 @@ begin
   out_z_tag    <= z_tag;
   out_dest_tag <= dest_tag;
   out_opcode   <= opcode;
+
+  -- Imm stuff
+  out_imm     <= imm_reg;
+  out_use_imm <= use_imm_reg;
 
   -- ==========================================
   -- WAKEUP & SELECT LOGIC (Combinational)
@@ -139,9 +152,11 @@ begin
         is_busy <= '0';
       elsif (dispatch_en = '1') then
         -- Load a new instruction into this RS slot
-        is_busy  <= '1';
-        opcode   <= in_opcode;
-        dest_tag <= in_dest_tag;
+        is_busy     <= '1';
+        opcode      <= in_opcode;
+        dest_tag    <= in_dest_tag;
+        imm_reg     <= in_imm;
+        use_imm_reg <= in_use_imm;
 
         rs1_tag <= in_rs1_tag;
         rs1_rdy <= in_rs1_rdy;

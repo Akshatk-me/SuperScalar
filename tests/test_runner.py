@@ -30,6 +30,7 @@ SIMULATOR = os.getenv("SIM", "ghdl")
         ("test_instruction_decoder", "instruction_decoder", "InstructionDecoder.vhdl"),
         ("test_micro_op_sequencer", "micro_op_sequencer", "MicroOpSequencer.vhdl"),
         ("test_btb", "branch_target_buffer", "btb.vhdl"),
+        ("test_frontend_top", "frontend_top", "frontend_top.vhdl"),
     ],
 )
 def test_hardware_modules(module_name, top_level, vhdl_file):
